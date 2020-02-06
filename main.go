@@ -118,6 +118,10 @@ cont:
 
 func walkMaildir(maildir string, walkFn filepath.WalkFunc) error {
 	wrapFn := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return walkFn(path, nil, err)
+		}
+
 		if info.IsDir() {
 			if !isMaildir(info.Name()) {
 				return fmt.Errorf("unexpected folder %q", info.Name())
