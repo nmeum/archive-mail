@@ -19,9 +19,9 @@ var (
 	csum = flag.String("c", "sha1", "checksum algorithm to use for duplicate detection")
 )
 
-type MsgPair struct {
-	old string
-	new string
+type ModMsg struct {
+	path string
+	newFlags string
 }
 
 var chkSum hash.Hash
@@ -29,7 +29,7 @@ var chkSum hash.Hash
 var (
 	oldMsgs = make(map[string]string)
 	newMsgs = []string{}
-	dupMsgs = []MsgPair{}
+	modMsgs = []ModMsg{}
 )
 
 func usage() {
@@ -58,6 +58,15 @@ func strToHsh(algorithm string) *hash.Hash {
 
 func isMaildir(name string) bool {
 	return name == "new" || name == "cur" || name == "tmp"
+}
+
+func extractFlags(fn string) (string, error) {
+	idx := strings.IndexByte(fn, ':')
+	if idx == -1 || idx + 1 >= len(fn) {
+		return "", fmt.Errorf("message has no flags")
+	}
+
+	return fn[idx:], nil
 }
 
 func indexOldMsgs(path string, info os.FileInfo, err error) error {
@@ -89,11 +98,20 @@ func indexNewMsgs(path string, info os.FileInfo, err error) error {
 	sum := string(chkSum.Sum(data))
 	old, ok := oldMsgs[sum]
 	if ok {
-		dupMsgs = append(dupMsgs, MsgPair{old, path})
+		if filepath.Base(old) == info.Name() {
+			goto cont
+		}
+		newFlags, err := extractFlags(info.Name())
+		if err != nil {
+			goto cont
+		}
+
+		modMsgs = append(modMsgs, ModMsg{old, newFlags})
 	} else {
 		newMsgs = append(newMsgs, path)
 	}
 
+cont:
 	delete(oldMsgs, sum)
 	return nil
 }
@@ -147,8 +165,8 @@ func mergeMsgs(olddir, newdir string) error {
 		fmt.Println(new)
 	}
 	fmt.Printf("##\n# Changed Flags\n##\n\n")
-	for _, msg := range dupMsgs {
-		fmt.Printf("%q changed (%q)\n", msg.old, msg.new)
+	for _, msg := range modMsgs {
+		fmt.Printf("%s, new flags: %s\n", msg.path, msg.newFlags)
 	}
 
 	return nil
