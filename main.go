@@ -103,7 +103,7 @@ func indexNewMsgs(path string, info os.FileInfo, err error) error {
 		}
 		newFlags, err := extractFlags(info.Name())
 		if err != nil {
-			goto cont
+			return err
 		}
 
 		modMsgs = append(modMsgs, ModMsg{old, newFlags})
