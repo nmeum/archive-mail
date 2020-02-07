@@ -1,59 +1,27 @@
 package main
 
 import (
-	"crypto/md5"
 	"crypto/sha1"
-	"crypto/sha256"
-	"crypto/sha512"
-	"flag"
 	"fmt"
 	"hash"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
-)
-
-var (
-	csum = flag.String("c", "sha1", "checksum algorithm to use for duplicate detection")
 )
 
 type ModMsg struct {
 	old, new string
 }
 
-var chkSum hash.Hash
+// SHA1 should be good enough for this purpose
+var chkSum hash.Hash = sha1.New()
 
 var (
 	oldMsgs = make(map[string]string)
 	newMsgs = []string{}
 	modMsgs = []ModMsg{}
 )
-
-func usage() {
-	fmt.Fprintf(flag.CommandLine.Output(),
-		"USAGE: %s [FLAGS] OLDMAILDIR NEWMAILDIR\n\n"+
-			"The following flags are supported:\n\n", os.Args[0])
-
-	flag.PrintDefaults()
-	os.Exit(2)
-}
-
-func strToHsh(algorithm string) *hash.Hash {
-	var hash hash.Hash
-	switch strings.ToLower(algorithm) {
-	case "md5":
-		hash = md5.New()
-	case "sha1":
-		hash = sha1.New()
-	case "sha256":
-		hash = sha256.New()
-	case "sha512":
-		hash = sha512.New()
-	}
-	return &hash
-}
 
 func isMaildir(name string) bool {
 	return name == "new" || name == "cur" || name == "tmp"
@@ -176,20 +144,13 @@ func mergeMsgs(olddir, newdir string) error {
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-
-	flag.Parse()
-	if flag.NArg() < 2 {
-		usage()
-	}
-
-	sum := strToHsh(*csum)
-	if sum == nil {
-		log.Fatalf("Unsupported checksum algorithm %q\n", *csum)
-	} else {
-		chkSum = *sum
+	if len(os.Args) <= 2 {
+		fmt.Fprintf(os.Stderr, "Usage: %s OLD_MAILDIR NEW_MAILDIR\n",
+			filepath.Base(os.Args[0]))
+		os.Exit(1)
 	}
 
 	// TODO: Handle moves between different maildirs
 
-	mergeMsgs(flag.Arg(0), flag.Arg(1))
+	mergeMsgs(os.Args[1], os.Args[2])
 }
