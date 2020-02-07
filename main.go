@@ -103,13 +103,8 @@ func indexNewMsgs(path string, info os.FileInfo, err error) error {
 			goto cont
 		}
 
-		newPathRel := filepath.Join(filepath.Dir(old), "..", newDir, info.Name())
-		newPath, err := filepath.Abs(newPathRel)
-		if err != nil {
-			return err
-		}
-
-		modMsgs = append(modMsgs, ModMsg{old, newPath})
+		newPath := filepath.Join(filepath.Dir(old), "..", newDir, info.Name())
+		modMsgs = append(modMsgs, ModMsg{old, filepath.Clean(newPath)})
 	} else {
 		newMsgs = append(newMsgs, path)
 	}
@@ -193,6 +188,8 @@ func main() {
 	} else {
 		chkSum = *sum
 	}
+
+	// TODO: Handle moves between different maildirs
 
 	mergeMsgs(flag.Arg(0), flag.Arg(1))
 }
