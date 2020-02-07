@@ -65,9 +65,8 @@ func indexNewMsgs(path string, info os.FileInfo, err error) error {
 	sum := string(chkSum.Sum(data))
 	old, ok := oldMsgs[sum]
 	if ok {
-		oldDir := getDir(old)
 		newDir := getDir(path)
-		if oldDir == newDir && filepath.Base(old) == info.Name() {
+		if getDir(old) == newDir && filepath.Base(old) == info.Name() {
 			goto cont
 		}
 
