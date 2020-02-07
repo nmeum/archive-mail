@@ -20,8 +20,7 @@ var (
 )
 
 type ModMsg struct {
-	path     string
-	newFlags string
+	old, new string
 }
 
 var chkSum hash.Hash
@@ -60,13 +59,13 @@ func isMaildir(name string) bool {
 	return name == "new" || name == "cur" || name == "tmp"
 }
 
-func extractFlags(fn string) (string, error) {
-	idx := strings.IndexByte(fn, ':')
-	if idx == -1 || idx+1 >= len(fn) {
-		return "", fmt.Errorf("message has no flags")
+func getDir(path string) string {
+	dir := filepath.Base(filepath.Dir(path))
+	if !isMaildir(dir) {
+		panic("unexpected non-maildir folder")
 	}
 
-	return fn[idx:], nil
+	return dir
 }
 
 func indexOldMsgs(path string, info os.FileInfo, err error) error {
@@ -98,15 +97,19 @@ func indexNewMsgs(path string, info os.FileInfo, err error) error {
 	sum := string(chkSum.Sum(data))
 	old, ok := oldMsgs[sum]
 	if ok {
-		if filepath.Base(old) == info.Name() {
+		oldDir := getDir(old)
+		newDir := getDir(path)
+		if oldDir == newDir && filepath.Base(old) == info.Name() {
 			goto cont
 		}
-		newFlags, err := extractFlags(info.Name())
+
+		newPathRel := filepath.Join(oldDir, "..", newDir, info.Name())
+		newPath, err := filepath.Abs(newPathRel)
 		if err != nil {
 			return err
 		}
 
-		modMsgs = append(modMsgs, ModMsg{old, newFlags})
+		modMsgs = append(modMsgs, ModMsg{old, newPath})
 	} else {
 		newMsgs = append(newMsgs, path)
 	}
@@ -164,13 +167,13 @@ func mergeMsgs(olddir, newdir string) error {
 	}
 
 	// TODO: merge them
-	fmt.Printf("\n##\n# New Messages\n##\n\n")
+	fmt.Printf("##\n# New Messages\n##\n\n")
 	for _, new := range newMsgs {
 		fmt.Println(new)
 	}
-	fmt.Printf("##\n# Changed Flags\n##\n\n")
+	fmt.Printf("\n##\n# Changed Messages\n##\n\n")
 	for _, msg := range modMsgs {
-		fmt.Printf("%s, new flags: %s\n", msg.path, msg.newFlags)
+		fmt.Printf("%s → %s\n", msg.old, msg.new)
 	}
 
 	return nil
