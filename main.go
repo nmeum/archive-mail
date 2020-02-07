@@ -103,7 +103,7 @@ func indexNewMsgs(path string, info os.FileInfo, err error) error {
 			goto cont
 		}
 
-		newPathRel := filepath.Join(oldDir, "..", newDir, info.Name())
+		newPathRel := filepath.Join(filepath.Dir(old), "..", newDir, info.Name())
 		newPath, err := filepath.Abs(newPathRel)
 		if err != nil {
 			return err
