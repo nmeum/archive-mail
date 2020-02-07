@@ -1,18 +1,18 @@
 package main
 
 import (
-	"flag"
-	"io/ioutil"
-	"os"
-	"log"
-	"hash"
-	"strings"
-	"fmt"
-	"path/filepath"
-	"crypto/sha1"
 	"crypto/md5"
+	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
+	"flag"
+	"fmt"
+	"hash"
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 )
 
 type ModMsg struct {
-	path string
+	path     string
 	newFlags string
 }
 
@@ -43,7 +43,7 @@ func usage() {
 
 func strToHsh(algorithm string) *hash.Hash {
 	var hash hash.Hash
-	switch (strings.ToLower(algorithm)) {
+	switch strings.ToLower(algorithm) {
 	case "md5":
 		hash = md5.New()
 	case "sha1":
@@ -62,7 +62,7 @@ func isMaildir(name string) bool {
 
 func extractFlags(fn string) (string, error) {
 	idx := strings.IndexByte(fn, ':')
-	if idx == -1 || idx + 1 >= len(fn) {
+	if idx == -1 || idx+1 >= len(fn) {
 		return "", fmt.Errorf("message has no flags")
 	}
 
