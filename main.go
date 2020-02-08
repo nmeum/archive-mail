@@ -92,13 +92,9 @@ func parseArgs(args []string) (map[string]string, error) {
 	return parsedArgs, nil
 }
 
-func indexMsgs() (*MailDatabase, error) {
+func indexMsgs(args map[string]string) (*MailDatabase, error) {
 	var wg sync.WaitGroup
 	db := NewMailDatabase()
-	args, err := parseArgs(os.Args[1:])
-	if err != nil {
-		return nil, err
-	}
 
 	wfn := func(dir string, mfn MailWalkFn) {
 		defer wg.Done()
@@ -125,13 +121,17 @@ func indexMsgs() (*MailDatabase, error) {
 
 func main() {
 	log.SetFlags(log.Lshortfile)
+
 	if len(os.Args) <= 1 {
 		fmt.Fprintf(os.Stderr, "Usage: %s OLD_MAILDIR→NEW_MAILDIR ...\n",
 			filepath.Base(os.Args[0]))
 		os.Exit(1)
 	}
-
-	db, err := indexMsgs()
+	args, err := parseArgs(os.Args[1:])
+	if err != nil {
+		log.Fatal(err)
+	}
+	db, err := indexMsgs(args)
 	if err != nil {
 		log.Fatal(err)
 	}
