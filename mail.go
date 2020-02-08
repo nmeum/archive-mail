@@ -15,7 +15,7 @@ import (
 var chkSum hash.Hash = sha1.New()
 
 type Mail struct {
-	maildir   string // absolute path to maildir
+	maildir   string // path to maildir
 	directory string // new, cur, or tmp
 	name      string // basename of message
 }
