@@ -62,7 +62,7 @@ func walkMaildir(maildir string, db *MailDatabase, walkFn MailWalkFn) error {
 		return walkFn(mail, db, err)
 	}
 
-	for _, dir := range []string{"cur", "new", "tmp"} {
+	for _, dir := range []string{"cur", "new"} {
 		err := filepath.Walk(filepath.Join(maildir, dir), wrapFn)
 		if err != nil {
 			return err
