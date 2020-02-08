@@ -127,13 +127,9 @@ func mergeMsgs(args map[string]string, db *MailDatabase) error {
 		}
 	}
 	for _, pair := range db.modMsgs {
-		// TODO: If only flags changed or mail moved between new
-		// and cur in current maildir use rename directly.
-		err := pair.new.CopyTo(args[pair.new.maildir])
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = os.Remove(pair.old.Path())
+		destDir := args[pair.new.maildir]
+		newFp := filepath.Join(destDir, pair.new.directory, pair.new.name)
+		err := os.Rename(pair.old.Path(), newFp)
 		if err != nil {
 			return err
 		}
