@@ -1,10 +1,16 @@
 package main
 
 import (
+	"crypto/sha1"
 	"errors"
+	"hash"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 )
+
+// SHA1 should be good enough for this purpose
+var chkSum hash.Hash = sha1.New()
 
 type Mail struct {
 	maildir   string // absolute path to maildir
@@ -28,6 +34,15 @@ func NewMail(maildir string, fp string) (*Mail, error) {
 
 func (m *Mail) Path() string {
 	return filepath.Join(m.maildir, m.directory, m.name)
+}
+
+func (m *Mail) Checksum() (string, error) {
+	data, err := ioutil.ReadFile(m.Path())
+	if err != nil {
+		return "", err
+	}
+
+	return string(chkSum.Sum(data)), nil
 }
 
 func (m *Mail) IsSame(other *Mail) bool {
