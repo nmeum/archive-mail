@@ -136,12 +136,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("##\n# New Messages\n##\n\n")
 	for _, new := range db.newMsgs {
-		fmt.Println(new)
+		err := new.CopyTo(args[new.maildir])
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-	fmt.Printf("\n##\n# Changed Messages\n##\n\n")
-	for _, msg := range db.modMsgs {
-		fmt.Printf("%s → %s\n", msg.old, msg.new)
+	for _, pair := range db.modMsgs {
+		// TODO: If only flags changed or mail moved between new
+		// and cur in current maildir use rename directly.
+		err := pair.new.CopyTo(args[pair.new.maildir])
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = os.Remove(pair.old.Path())
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
