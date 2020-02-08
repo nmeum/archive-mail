@@ -38,7 +38,6 @@ func indexNewMsgs(mail *Mail, db *MailDatabase, err error) error {
 		db.AddNewMessage(nil, mail)
 	} else if !oldMail.IsSame(mail) {
 		db.AddNewMessage(oldMail, mail)
-		// TODO: delete old mail from database?
 	}
 
 	return nil
