@@ -1,106 +1,64 @@
 package main
 
 import (
-	"crypto/sha1"
 	"fmt"
-	"hash"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 )
 
-type ModMsg struct {
-	old, new string
-}
+type MailWalkFn func(mail *Mail, db *MailDatabase, err error) error
 
-type MailInfo struct {
-	checksum string
-	os.FileInfo
-}
-
-type MailDatabase struct {
-	newMsgs []string
-	modMsgs []ModMsg
-}
-
-type MailWalkFn func(path string, info *MailInfo, db *MailDatabase, err error) error
-
-// SHA1 should be good enough for this purpose
-var chkSum hash.Hash = sha1.New()
-
-// checksum → path to mail message
-var oldMsgs = make(map[string]string)
-
-// array of maildir database, one for each maildir pair
-var mailDBs []*MailDatabase
-
-func isMaildir(name string) bool {
-	return name == "new" || name == "cur" || name == "tmp"
-}
-
-func getDir(path string) string {
-	dir := filepath.Base(filepath.Dir(path))
-	if !isMaildir(dir) {
-		panic("unexpected non-maildir folder")
-	}
-
-	return dir
-}
-
-func indexOldMsgs(path string, info *MailInfo, db *MailDatabase, err error) error {
+func indexOldMsgs(mail *Mail, db *MailDatabase, err error) error {
 	if err != nil {
 		panic(err)
 	}
 
-	oldMsgs[info.checksum] = path
+	db.AddOldMessage(mail)
 	return nil
 }
 
-func indexNewMsgs(path string, info *MailInfo, db *MailDatabase, err error) error {
+func indexNewMsgs(mail *Mail, db *MailDatabase, err error) error {
 	if err != nil {
 		panic(err)
 	}
 
-	old, ok := oldMsgs[info.checksum]
-	if ok {
-		newDir := getDir(path)
-		if getDir(old) == newDir && filepath.Base(old) == info.Name() {
-			goto cont
-		}
-
-		newPath := filepath.Join(filepath.Dir(old), "..", newDir, info.Name())
-		db.modMsgs = append(db.modMsgs, ModMsg{old, filepath.Clean(newPath)})
-	} else {
-		db.newMsgs = append(db.newMsgs, path)
+	oldMail, err := db.GetOldMessage(mail)
+	if err != nil {
+		return err
 	}
 
-cont:
-	delete(oldMsgs, info.checksum)
+	if oldMail == nil {
+		db.AddNewMessage(nil, mail)
+	} else if !oldMail.IsSame(mail) {
+		db.AddNewMessage(oldMail, mail)
+		// TODO: delete old mail from database?
+	}
+
 	return nil
 }
 
 func walkMaildir(maildir string, db *MailDatabase, walkFn MailWalkFn) error {
 	wrapFn := func(path string, info os.FileInfo, err error) error {
+		handleError := func(err error) error { return walkFn(nil, nil, err) }
 		if err != nil {
-			return walkFn(path, nil, nil, err)
+			return handleError(err)
 		}
 
 		if info.IsDir() {
 			if !isMaildir(info.Name()) {
-				return fmt.Errorf("unexpected folder %q", info.Name())
+				return handleError(fmt.Errorf("unexpected folder %q", info.Name()))
 			} else {
 				return nil
 			}
 		}
 
-		data, err := ioutil.ReadFile(path)
+		mail, err := NewMail(maildir, path)
 		if err != nil {
-			return err
+			return handleError(err)
 		}
 
-		minfo := MailInfo{string(chkSum.Sum(data)), info}
-		return walkFn(path, &minfo, db, err)
+		return walkFn(mail, db, err)
 	}
 
 	for _, dir := range []string{"cur", "new", "tmp"} {
@@ -113,39 +71,34 @@ func walkMaildir(maildir string, db *MailDatabase, walkFn MailWalkFn) error {
 	return nil
 }
 
-func indexMsgs(olddir, newdir string) error {
-	database := new(MailDatabase)
-	mailDBs = append(mailDBs, database)
-
-	err := walkMaildir(olddir, database, indexOldMsgs)
+func indexMsgs(olddir, newdir string) (*MailDatabase, error) {
+	db := NewMailDatabase()
+	err := walkMaildir(olddir, db, indexOldMsgs)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	err = walkMaildir(newdir, db, indexNewMsgs)
+	if err != nil {
+		return nil, err
 	}
 
-	err = walkMaildir(newdir, database, indexNewMsgs)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db, nil
 }
 
 func mergeMsgs(olddir, newdir string) error {
-	err := indexMsgs(olddir, newdir)
+	db, err := indexMsgs(olddir, newdir)
 	if err != nil {
 		return err
 	}
 
-	for _, db := range mailDBs {
-		// TODO: merge them
-		fmt.Printf("##\n# New Messages\n##\n\n")
-		for _, new := range db.newMsgs {
-			fmt.Println(new)
-		}
-		fmt.Printf("\n##\n# Changed Messages\n##\n\n")
-		for _, msg := range db.modMsgs {
-			fmt.Printf("%s → %s\n", msg.old, msg.new)
-		}
+	// TODO: merge them
+	fmt.Printf("##\n# New Messages\n##\n\n")
+	for _, new := range db.newMsgs {
+		fmt.Println(new)
+	}
+	fmt.Printf("\n##\n# Changed Messages\n##\n\n")
+	for _, msg := range db.modMsgs {
+		fmt.Printf("%s → %s\n", msg.old, msg.new)
 	}
 
 	return nil
