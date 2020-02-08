@@ -123,7 +123,7 @@ func main() {
 	log.SetFlags(log.Lshortfile)
 
 	if len(os.Args) <= 1 {
-		fmt.Fprintf(os.Stderr, "Usage: %s NEW_MAILDIR→OLD_MAILDIR ...\n",
+		fmt.Fprintf(os.Stderr, "Usage: %s MAILDIR_CURRENT→MAILDIR_ARCHIVE ...\n",
 			filepath.Base(os.Args[0]))
 		os.Exit(1)
 	}
