@@ -4,7 +4,9 @@ import (
 	"crypto/sha1"
 	"errors"
 	"hash"
+	"io"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -49,4 +51,27 @@ func (m *Mail) IsSame(other *Mail) bool {
 	return filepath.Base(m.maildir) == filepath.Base(other.maildir) &&
 		m.directory == other.directory &&
 		m.name == other.name
+}
+
+func (m *Mail) CopyTo(maildir string) error {
+	file, err := os.Open(m.Path())
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	tmpFp := filepath.Join(maildir, "tmp", m.name)
+	newFile, err := os.Create(tmpFp)
+	if err != nil {
+		return err
+	}
+	defer newFile.Close()
+
+	_, err = io.Copy(newFile, file)
+	if err != nil {
+		return err
+	}
+
+	newFp := filepath.Join(maildir, m.directory, m.name)
+	return os.Rename(tmpFp, newFp)
 }
