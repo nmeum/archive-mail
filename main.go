@@ -5,7 +5,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 )
+
+type Argument struct {
+	old, new string
+}
 
 type MailWalkFn func(mail *Mail, db *MailDatabase, err error) error
 
@@ -71,27 +77,62 @@ func walkMaildir(maildir string, db *MailDatabase, walkFn MailWalkFn) error {
 	return nil
 }
 
-func indexMsgs(olddir, newdir string) (*MailDatabase, error) {
+func parseArgs(args []string) ([]Argument, error) {
+	var parsedArgs []Argument
+	for _, arg := range args {
+		splitted := strings.Split(arg, "→")
+		if len(splitted) != 2 {
+			return []Argument{}, fmt.Errorf("invalid argument %q", arg)
+		}
+		parsedArgs = append(parsedArgs, Argument{splitted[0], splitted[1]})
+	}
+	return parsedArgs, nil
+}
+
+func indexMsgs() (*MailDatabase, error) {
+	var wg sync.WaitGroup
 	db := NewMailDatabase()
-	err := walkMaildir(olddir, db, indexOldMsgs)
+	args, err := parseArgs(os.Args[1:])
 	if err != nil {
 		return nil, err
 	}
-	err = walkMaildir(newdir, db, indexNewMsgs)
-	if err != nil {
-		return nil, err
+
+	wfn := func(dir string, mfn MailWalkFn) {
+		defer wg.Done()
+		err := walkMaildir(dir, db, mfn)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+
+	wg.Add(len(args))
+	for _, arg := range args {
+		go wfn(arg.old, indexOldMsgs)
+	}
+	wg.Wait()
+
+	wg.Add(len(args))
+	for _, arg := range args {
+		go wfn(arg.new, indexNewMsgs)
+	}
+	wg.Wait()
 
 	return db, nil
 }
 
-func mergeMsgs(olddir, newdir string) error {
-	db, err := indexMsgs(olddir, newdir)
-	if err != nil {
-		return err
+func main() {
+	log.SetFlags(log.Lshortfile)
+	if len(os.Args) <= 1 {
+		fmt.Fprintf(os.Stderr, "Usage: %s OLD_MAILDIR→NEW_MAILDIR ...\n",
+			filepath.Base(os.Args[0]))
+		os.Exit(1)
 	}
 
-	// TODO: merge them
+	db, err := indexMsgs()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Printf("##\n# New Messages\n##\n\n")
 	for _, new := range db.newMsgs {
 		fmt.Println(new)
@@ -100,19 +141,4 @@ func mergeMsgs(olddir, newdir string) error {
 	for _, msg := range db.modMsgs {
 		fmt.Printf("%s → %s\n", msg.old, msg.new)
 	}
-
-	return nil
-}
-
-func main() {
-	log.SetFlags(log.Lshortfile)
-	if len(os.Args) <= 2 {
-		fmt.Fprintf(os.Stderr, "Usage: %s OLD_MAILDIR NEW_MAILDIR\n",
-			filepath.Base(os.Args[0]))
-		os.Exit(1)
-	}
-
-	// TODO: Handle moves between different maildirs
-
-	mergeMsgs(os.Args[1], os.Args[2])
 }
