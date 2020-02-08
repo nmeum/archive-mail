@@ -19,16 +19,21 @@ type MailInfo struct {
 	os.FileInfo
 }
 
-type MailWalkFn func(mp string, fp string, info *MailInfo, err error) error
+type MailDatabase struct {
+	newMsgs []string
+	modMsgs []ModMsg
+}
+
+type MailWalkFn func(path string, info *MailInfo, db *MailDatabase, err error) error
 
 // SHA1 should be good enough for this purpose
 var chkSum hash.Hash = sha1.New()
 
-var (
-	oldMsgs = make(map[string]string)
-	newMsgs = []string{}
-	modMsgs = []ModMsg{}
-)
+// checksum → path to mail message
+var oldMsgs = make(map[string]string)
+
+// array of maildir database, one for each maildir pair
+var mailDBs []*MailDatabase
 
 func isMaildir(name string) bool {
 	return name == "new" || name == "cur" || name == "tmp"
@@ -43,31 +48,31 @@ func getDir(path string) string {
 	return dir
 }
 
-func indexOldMsgs(mp, fp string, info *MailInfo, err error) error {
+func indexOldMsgs(path string, info *MailInfo, db *MailDatabase, err error) error {
 	if err != nil {
 		panic(err)
 	}
 
-	oldMsgs[info.checksum] = fp
+	oldMsgs[info.checksum] = path
 	return nil
 }
 
-func indexNewMsgs(mp, fp string, info *MailInfo, err error) error {
+func indexNewMsgs(path string, info *MailInfo, db *MailDatabase, err error) error {
 	if err != nil {
 		panic(err)
 	}
 
 	old, ok := oldMsgs[info.checksum]
 	if ok {
-		newDir := getDir(fp)
+		newDir := getDir(path)
 		if getDir(old) == newDir && filepath.Base(old) == info.Name() {
 			goto cont
 		}
 
 		newPath := filepath.Join(filepath.Dir(old), "..", newDir, info.Name())
-		modMsgs = append(modMsgs, ModMsg{old, filepath.Clean(newPath)})
+		db.modMsgs = append(db.modMsgs, ModMsg{old, filepath.Clean(newPath)})
 	} else {
-		newMsgs = append(newMsgs, fp)
+		db.newMsgs = append(db.newMsgs, path)
 	}
 
 cont:
@@ -75,10 +80,10 @@ cont:
 	return nil
 }
 
-func walkMaildir(maildir string, walkFn MailWalkFn) error {
+func walkMaildir(maildir string, db *MailDatabase, walkFn MailWalkFn) error {
 	wrapFn := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return walkFn(maildir, path, nil, err)
+			return walkFn(path, nil, nil, err)
 		}
 
 		if info.IsDir() {
@@ -95,7 +100,7 @@ func walkMaildir(maildir string, walkFn MailWalkFn) error {
 		}
 
 		minfo := MailInfo{string(chkSum.Sum(data)), info}
-		return walkFn(maildir, path, &minfo, err)
+		return walkFn(path, &minfo, db, err)
 	}
 
 	for _, dir := range []string{"cur", "new", "tmp"} {
@@ -109,12 +114,15 @@ func walkMaildir(maildir string, walkFn MailWalkFn) error {
 }
 
 func indexMsgs(olddir, newdir string) error {
-	err := walkMaildir(olddir, indexOldMsgs)
+	database := new(MailDatabase)
+	mailDBs = append(mailDBs, database)
+
+	err := walkMaildir(olddir, database, indexOldMsgs)
 	if err != nil {
 		return err
 	}
 
-	err = walkMaildir(newdir, indexNewMsgs)
+	err = walkMaildir(newdir, database, indexNewMsgs)
 	if err != nil {
 		return err
 	}
@@ -128,14 +136,16 @@ func mergeMsgs(olddir, newdir string) error {
 		return err
 	}
 
-	// TODO: merge them
-	fmt.Printf("##\n# New Messages\n##\n\n")
-	for _, new := range newMsgs {
-		fmt.Println(new)
-	}
-	fmt.Printf("\n##\n# Changed Messages\n##\n\n")
-	for _, msg := range modMsgs {
-		fmt.Printf("%s → %s\n", msg.old, msg.new)
+	for _, db := range mailDBs {
+		// TODO: merge them
+		fmt.Printf("##\n# New Messages\n##\n\n")
+		for _, new := range db.newMsgs {
+			fmt.Println(new)
+		}
+		fmt.Printf("\n##\n# Changed Messages\n##\n\n")
+		for _, msg := range db.modMsgs {
+			fmt.Printf("%s → %s\n", msg.old, msg.new)
+		}
 	}
 
 	return nil
