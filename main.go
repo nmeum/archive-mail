@@ -81,8 +81,8 @@ func parseArgs(args []string) (map[string]string, error) {
 			return nil, fmt.Errorf("invalid argument %q", arg)
 		}
 
-		old := splitted[0]
-		new := splitted[1]
+		new := splitted[0]
+		old := splitted[1]
 
 		if _, ok := parsedArgs[new]; ok {
 			return nil, fmt.Errorf("duplicate maildir %q", arg)
@@ -123,7 +123,7 @@ func main() {
 	log.SetFlags(log.Lshortfile)
 
 	if len(os.Args) <= 1 {
-		fmt.Fprintf(os.Stderr, "Usage: %s OLD_MAILDIR→NEW_MAILDIR ...\n",
+		fmt.Fprintf(os.Stderr, "Usage: %s NEW_MAILDIR→OLD_MAILDIR ...\n",
 			filepath.Base(os.Args[0]))
 		os.Exit(1)
 	}
