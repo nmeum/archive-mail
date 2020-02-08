@@ -119,6 +119,29 @@ func indexMsgs(args map[string]string) (*MailDatabase, error) {
 	return db, nil
 }
 
+func mergeMsgs(args map[string]string, db *MailDatabase) error {
+	for _, new := range db.newMsgs {
+		err := new.CopyTo(args[new.maildir])
+		if err != nil {
+			return err
+		}
+	}
+	for _, pair := range db.modMsgs {
+		// TODO: If only flags changed or mail moved between new
+		// and cur in current maildir use rename directly.
+		err := pair.new.CopyTo(args[pair.new.maildir])
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = os.Remove(pair.old.Path())
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func main() {
 	log.SetFlags(log.Lshortfile)
 
@@ -131,27 +154,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	db, err := indexMsgs(args)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	for _, new := range db.newMsgs {
-		err := new.CopyTo(args[new.maildir])
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	for _, pair := range db.modMsgs {
-		// TODO: If only flags changed or mail moved between new
-		// and cur in current maildir use rename directly.
-		err := pair.new.CopyTo(args[pair.new.maildir])
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = os.Remove(pair.old.Path())
-		if err != nil {
-			log.Fatal(err)
-		}
+	err = mergeMsgs(args, db)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
