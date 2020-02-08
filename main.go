@@ -19,7 +19,7 @@ type MailInfo struct {
 	os.FileInfo
 }
 
-type mailWalkFn func(mp string, fp string, info *MailInfo, err error) error
+type MailWalkFn func(mp string, fp string, info *MailInfo, err error) error
 
 // SHA1 should be good enough for this purpose
 var chkSum hash.Hash = sha1.New()
@@ -75,7 +75,7 @@ cont:
 	return nil
 }
 
-func walkMaildir(maildir string, walkFn mailWalkFn) error {
+func walkMaildir(maildir string, walkFn MailWalkFn) error {
 	wrapFn := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return walkFn(maildir, path, nil, err)
