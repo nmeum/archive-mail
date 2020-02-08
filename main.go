@@ -14,6 +14,13 @@ type ModMsg struct {
 	old, new string
 }
 
+type MailInfo struct {
+	checksum string
+	os.FileInfo
+}
+
+type mailWalkFn func(path string, info *MailInfo, err error) error
+
 // SHA1 should be good enough for this purpose
 var chkSum hash.Hash = sha1.New()
 
@@ -36,34 +43,21 @@ func getDir(path string) string {
 	return dir
 }
 
-func indexOldMsgs(path string, info os.FileInfo, err error) error {
+func indexOldMsgs(path string, info *MailInfo, err error) error {
 	if err != nil {
 		panic(err)
 	}
 
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	sum := string(chkSum.Sum(data))
-	oldMsgs[sum] = path
-
+	oldMsgs[info.checksum] = path
 	return nil
 }
 
-func indexNewMsgs(path string, info os.FileInfo, err error) error {
+func indexNewMsgs(path string, info *MailInfo, err error) error {
 	if err != nil {
 		panic(err)
 	}
 
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	sum := string(chkSum.Sum(data))
-	old, ok := oldMsgs[sum]
+	old, ok := oldMsgs[info.checksum]
 	if ok {
 		newDir := getDir(path)
 		if getDir(old) == newDir && filepath.Base(old) == info.Name() {
@@ -77,11 +71,11 @@ func indexNewMsgs(path string, info os.FileInfo, err error) error {
 	}
 
 cont:
-	delete(oldMsgs, sum)
+	delete(oldMsgs, info.checksum)
 	return nil
 }
 
-func walkMaildir(maildir string, walkFn filepath.WalkFunc) error {
+func walkMaildir(maildir string, walkFn mailWalkFn) error {
 	wrapFn := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return walkFn(path, nil, err)
@@ -95,7 +89,13 @@ func walkMaildir(maildir string, walkFn filepath.WalkFunc) error {
 			}
 		}
 
-		return walkFn(path, info, err)
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		minfo := MailInfo{string(chkSum.Sum(data)), info}
+		return walkFn(path, &minfo, err)
 	}
 
 	for _, dir := range []string{"cur", "new", "tmp"} {
