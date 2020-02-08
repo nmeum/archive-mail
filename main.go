@@ -9,10 +9,6 @@ import (
 	"sync"
 )
 
-type Argument struct {
-	old, new string
-}
-
 type MailWalkFn func(mail *Mail, db *MailDatabase, err error) error
 
 func indexOldMsgs(mail *Mail, db *MailDatabase, err error) error {
@@ -76,14 +72,22 @@ func walkMaildir(maildir string, db *MailDatabase, walkFn MailWalkFn) error {
 	return nil
 }
 
-func parseArgs(args []string) ([]Argument, error) {
-	var parsedArgs []Argument
+// Returns mapping new maildir → old maildir.
+func parseArgs(args []string) (map[string]string, error) {
+	parsedArgs := make(map[string]string)
 	for _, arg := range args {
 		splitted := strings.Split(arg, "→")
 		if len(splitted) != 2 {
-			return []Argument{}, fmt.Errorf("invalid argument %q", arg)
+			return nil, fmt.Errorf("invalid argument %q", arg)
 		}
-		parsedArgs = append(parsedArgs, Argument{splitted[0], splitted[1]})
+
+		old := splitted[0]
+		new := splitted[1]
+
+		if _, ok := parsedArgs[new]; ok {
+			return nil, fmt.Errorf("duplicate maildir %q", arg)
+		}
+		parsedArgs[new] = old
 	}
 	return parsedArgs, nil
 }
@@ -105,14 +109,14 @@ func indexMsgs() (*MailDatabase, error) {
 	}
 
 	wg.Add(len(args))
-	for _, arg := range args {
-		go wfn(arg.old, indexOldMsgs)
+	for _, old := range args {
+		go wfn(old, indexOldMsgs)
 	}
 	wg.Wait()
 
 	wg.Add(len(args))
-	for _, arg := range args {
-		go wfn(arg.new, indexNewMsgs)
+	for new, _ := range args {
+		go wfn(new, indexNewMsgs)
 	}
 	wg.Wait()
 
