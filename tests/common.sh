@@ -11,6 +11,14 @@ add_mail() {
 	done
 }
 
+check_maildir() {
+	diffout="$(diff -r "${1}" "${2}")"
+	if [ $? -ne 0 ]; then
+		printf "FAIL: Directories differ.\n\n%s\n" "${diffout}"
+		exit 1
+	fi
+}
+
 run_test() {
 	current="${1:-current}"
 	archive="${2:-archive}"
@@ -19,12 +27,7 @@ run_test() {
 	cp -r "${current}" "${current}.bkp"
 	"${ARCHIVE_MAIL}" "${current}"→"${archive}"
 
-	diffout="$(diff -r "${archive}" "${expected}")"
-	if [ $? -ne 0 ]; then
-		printf "FAIL: Output didn't match.\n\n%s\n" "${diffout}"
-		exit 1
-	fi
-
+	check_maildir "${archive}" "${expected}"
 	if ! diff -r "${current}.bkp" "${current}" >/dev/null; then
 		printf "FAIL: current was modified\n"
 		exit 1
