@@ -119,7 +119,7 @@ func indexMsgs(args map[string]string) (*MailDatabase, error) {
 	return db, nil
 }
 
-func mergeMsgs(args map[string]string, db *MailDatabase) error {
+func archiveMsgs(args map[string]string, db *MailDatabase) error {
 	for _, new := range db.newMsgs {
 		err := new.CopyTo(args[new.maildir])
 		if err != nil {
@@ -155,7 +155,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = mergeMsgs(args, db)
+	err = archiveMsgs(args, db)
 	if err != nil {
 		log.Fatal(err)
 	}
