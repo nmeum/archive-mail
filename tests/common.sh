@@ -1,3 +1,9 @@
+mmkdir() {
+	for maildir in "$@"; do
+		mkdir -p "${maildir}/new" "${maildir}/cur" "${maildir}/tmp"
+	done
+}
+
 add_mail() {
 	mail="$(cat)" # absorb here document
 	for path in "$@"; do

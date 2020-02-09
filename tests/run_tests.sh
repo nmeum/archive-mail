@@ -1,10 +1,5 @@
 #!/bin/sh
-
-mmkdir() {
-	for maildir in "$@"; do
-		mkdir -p "${maildir}/new" "${maildir}/cur" "${maildir}/tmp"
-	done
-}
+. "${0%/*}/common.sh"
 
 export ARCHIVE_MAIL="$(pwd)/../archive-mail"
 if [ ! -x "${ARCHIVE_MAIL}" ]; then
