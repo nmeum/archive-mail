@@ -6,16 +6,20 @@ add_mail() {
 }
 
 run_test() {
-	cp -r current current.bkp
-	"${ARCHIVE_MAIL}" current→archive
+	current="${1:-current}"
+	archive="${2:-archive}"
+	expected="${3:-expected}"
 
-	diffout="$(diff -r archive expected)"
+	cp -r "${current}" "${current}.bkp"
+	"${ARCHIVE_MAIL}" "${current}"→"${archive}"
+
+	diffout="$(diff -r "${archive}" "${expected}")"
 	if [ $? -ne 0 ]; then
 		printf "FAIL: Output didn't match.\n\n%s\n" "${diffout}"
 		exit 1
 	fi
 
-	if ! diff -r current.bkp current >/dev/null; then
+	if ! diff -r "${current}.bkp" "${current}" >/dev/null; then
 		printf "FAIL: current was modified\n"
 		exit 1
 	fi
