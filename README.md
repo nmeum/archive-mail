@@ -27,7 +27,8 @@ This will propagate the following changes to the archive:
    maildirs. For example, between `INBOX` and `GitHub` in the example
    above.
 
-The current maildir will never be modified.
+The current maildir will never be modified. Messages deleted from the
+current maildir will also not be deleted from the archive.
 
 ## Tests
 
