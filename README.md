@@ -6,7 +6,7 @@ Maintains a maildir archive synced with a current maildir.
 
 I only store the last `n` messages in the maildir on my mail server, I
 maintain a local archive which contains all mails I ever received. This
-tools helps propagating new and modified messages from the maildir on my
+tool helps propagating new and modified messages from the maildir on my
 server to my archive.
 
 ## Usage
