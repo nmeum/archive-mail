@@ -16,6 +16,17 @@ Sample usage for archiving the `INBOX` and `GitHub` maildir:
 	$ archive-mail mail/INBOX→/srv/nfs/archive/mail/INBOX \
 		mail/GitHub→/srv/nfs/archive/mail/GitHub
 
+This will propagate the following changes to the archive:
+
+1. New messages in `cur/` and `new/` from the current maildir, which
+   were previously not tracked in the archive.
+2. Changed flags, or file names in general, of messages already
+   tracked in the maildir archive.
+3. Location changes of messages in the archive. For example, messages
+   moved between `new/` and `cur/` and messages moved between different
+   maildirs. For example, between `INBOX` and `GitHub` in the example
+   above.
+
 The current maildir will never be modified.
 
 ## Tests
