@@ -20,15 +20,11 @@ check_maildir() {
 }
 
 run_test() {
-	current="${1:-current}"
-	archive="${2:-archive}"
-	expected="${3:-expected}"
+	cp -r current current.bkp
+	"${ARCHIVE_MAIL}" current→archive
 
-	cp -r "${current}" "${current}.bkp"
-	"${ARCHIVE_MAIL}" "${current}"→"${archive}"
-
-	check_maildir "${archive}" "${expected}"
-	if ! diff -r "${current}.bkp" "${current}" >/dev/null; then
+	check_maildir archive expected
+	if ! diff -r current.bkp current >/dev/null; then
 		printf "FAIL: current was modified\n"
 		exit 1
 	fi
