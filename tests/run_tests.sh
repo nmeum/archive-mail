@@ -1,5 +1,7 @@
 #!/bin/sh
-. "${0%/*}/common.sh"
+
+cd "${0%/*}"
+. common.sh
 
 export ARCHIVE_MAIL="$(pwd)/../archive-mail"
 if [ ! -x "${ARCHIVE_MAIL}" ]; then

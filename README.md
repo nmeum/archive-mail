@@ -34,7 +34,7 @@ current maildir will also not be deleted from the archive.
 
 A minimal test suite is provided it can be invoked as follows:
 
-	$ cd tests && ./run_tests.sh
+	$ ./tests/run_tests.sh
 
 ## License
 
