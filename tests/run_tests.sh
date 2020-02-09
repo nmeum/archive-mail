@@ -3,7 +3,7 @@
 cd "${0%/*}"
 . common.sh
 
-export ARCHIVE_MAIL="$(pwd)/../archive-mail"
+export ARCHIVE_MAIL="${ARCHIVE_MAIL:-$(pwd)/../archive-mail}"
 if [ ! -x "${ARCHIVE_MAIL}" ]; then
 	printf "'%s' does not exist\n" "${ARCHIVE_MAIL}" 1>&2
 	exit 1
