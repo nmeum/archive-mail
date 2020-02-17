@@ -30,6 +30,14 @@ This will propagate the following changes to the archive:
 The current maildir will never be modified. Messages deleted from the
 current maildir will also not be deleted from the archive.
 
+## Installation
+
+After cloning this repository compile the software as follows:
+
+	$ go build
+
+Afterwards copy the binary to your `$PATH` or use `go install`.
+
 ## Tests
 
 A minimal test suite is provided it can be invoked as follows:
