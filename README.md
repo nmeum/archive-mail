@@ -1,6 +1,6 @@
 # archive-mail
 
-Maintains a maildir archive synced with a current maildir.
+Maintains maildir archives synced with current maildirs.
 
 ## Motivation
 
