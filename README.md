@@ -4,7 +4,7 @@ Maintains maildir archives synced with current maildirs.
 
 ## Motivation
 
-I only store the last `n` messages in the maildir on my mail server, I
+I only store the last `N` messages in the maildir on my mail server, I
 maintain a local archive which contains all mails I ever received. This
 tool helps propagating new and modified messages from the maildir on my
 server to my archive.
@@ -18,8 +18,8 @@ Sample usage for archiving the `INBOX` and `GitHub` maildir:
 
 This will propagate the following changes to the archive:
 
-1. New messages in `cur/` and `new/` from the current maildir, which
-   were previously not tracked in the archive.
+1. New messages from the current maildir, which were previously
+   not tracked in the archive.
 2. Changed flags, or file names in general, of messages already
    tracked in the maildir archive.
 3. Location changes of messages in the archive. For example, messages
