@@ -1,12 +1,17 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+)
+
+var (
+	dryrun = flag.Bool("p", false, "only print changes don't perform them")
 )
 
 type MailWalkFn func(mail *Mail, db *MailDatabase, err error) error
@@ -121,12 +126,22 @@ func indexMsgs(args map[string]string) (*MailDatabase, error) {
 
 func archiveMsgs(args map[string]string, db *MailDatabase) error {
 	for _, new := range db.newMsgs {
+		if *dryrun {
+			fmt.Printf("[%s] new: %q\n", new.maildir, new)
+			continue
+		}
+
 		err := new.CopyTo(args[new.maildir])
 		if err != nil {
 			return err
 		}
 	}
 	for _, pair := range db.modMsgs {
+		if *dryrun {
+			fmt.Printf("[%s] move: %q → %q\n", pair.new.maildir, pair.old, pair.new)
+			continue
+		}
+
 		destDir := args[pair.new.maildir]
 		newFp := filepath.Join(destDir, pair.new.directory, pair.new.name)
 		err := os.Rename(pair.old.Path(), newFp)
@@ -139,14 +154,15 @@ func archiveMsgs(args map[string]string, db *MailDatabase) error {
 }
 
 func main() {
+	flag.Parse()
 	log.SetFlags(log.Lshortfile)
 
-	if len(os.Args) <= 1 {
-		fmt.Fprintf(os.Stderr, "Usage: %s MAILDIR_CURRENT→MAILDIR_ARCHIVE ...\n",
+	if flag.NArg() < 1 {
+		fmt.Fprintf(os.Stderr, "Usage: %s [-p] MAILDIR_CURRENT→MAILDIR_ARCHIVE ...\n",
 			filepath.Base(os.Args[0]))
 		os.Exit(1)
 	}
-	args, err := parseArgs(os.Args[1:])
+	args, err := parseArgs(flag.Args())
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -34,6 +34,10 @@ func NewMail(maildir string, fp string) (*Mail, error) {
 	}, nil
 }
 
+func (m *Mail) String() string {
+	return filepath.Join(m.directory, m.name)
+}
+
 func (m *Mail) Path() string {
 	return filepath.Join(m.maildir, m.directory, m.name)
 }
