@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	dryrun = flag.Bool("p", false, "only print changes don't perform them")
+	verbose = flag.Bool("v", false, "print out performed changes")
+	dryrun  = flag.Bool("d", false, "don't perform any changes, combine with -v")
 )
 
 type MailWalkFn func(mail *Mail, db *MailDatabase, err error) error
@@ -126,8 +127,10 @@ func indexMsgs(args map[string]string) (*MailDatabase, error) {
 
 func archiveMsgs(args map[string]string, db *MailDatabase) error {
 	for _, new := range db.newMsgs {
-		if *dryrun {
+		if *verbose {
 			fmt.Printf("[%s] new: %s\n", filepath.Base(new.maildir), new)
+		}
+		if *dryrun {
 			continue
 		}
 
@@ -137,8 +140,12 @@ func archiveMsgs(args map[string]string, db *MailDatabase) error {
 		}
 	}
 	for _, pair := range db.modMsgs {
+		if *verbose {
+			fmt.Printf("[%s] move: %s → %s\n",
+				filepath.Base(pair.new.maildir),
+				pair.old, pair.new)
+		}
 		if *dryrun {
-			fmt.Printf("[%s] move: %s → %s\n", filepath.Base(pair.new.maildir), pair.old, pair.new)
 			continue
 		}
 
@@ -158,7 +165,7 @@ func main() {
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(),
-			"Usage: %s [-p] MAILDIR_CURRENT→MAILDIR_ARCHIVE\n\n", os.Args[0])
+			"Usage: %s [-v] [-d] MAILDIR_CURRENT→MAILDIR_ARCHIVE\n\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 	flag.Parse()
