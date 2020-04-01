@@ -127,7 +127,7 @@ func indexMsgs(args map[string]string) (*MailDatabase, error) {
 func archiveMsgs(args map[string]string, db *MailDatabase) error {
 	for _, new := range db.newMsgs {
 		if *dryrun {
-			fmt.Printf("[%s] new: %q\n", new.maildir, new)
+			fmt.Printf("[%s] new: %q\n", filepath.Base(new.maildir), new)
 			continue
 		}
 
@@ -138,7 +138,7 @@ func archiveMsgs(args map[string]string, db *MailDatabase) error {
 	}
 	for _, pair := range db.modMsgs {
 		if *dryrun {
-			fmt.Printf("[%s] move: %q → %q\n", pair.new.maildir, pair.old, pair.new)
+			fmt.Printf("[%s] move: %q → %q\n", filepath.Base(pair.new.maildir), pair.old, pair.new)
 			continue
 		}
 
