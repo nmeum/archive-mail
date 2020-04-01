@@ -154,12 +154,17 @@ func archiveMsgs(args map[string]string, db *MailDatabase) error {
 }
 
 func main() {
-	flag.Parse()
 	log.SetFlags(log.Lshortfile)
 
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(),
+			"Usage: %s [-p] MAILDIR_CURRENT→MAILDIR_ARCHIVE\n\n", os.Args[0])
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+
 	if flag.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: %s [-p] MAILDIR_CURRENT→MAILDIR_ARCHIVE ...\n",
-			filepath.Base(os.Args[0]))
+		flag.Usage()
 		os.Exit(1)
 	}
 	args, err := parseArgs(flag.Args())
