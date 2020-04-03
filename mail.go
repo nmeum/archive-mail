@@ -35,7 +35,7 @@ func NewMail(maildir string, fp string) (*Mail, error) {
 }
 
 func (m *Mail) String() string {
-	return filepath.Join(m.directory, m.name)
+	return filepath.Join(filepath.Base(m.maildir), m.directory, m.name)
 }
 
 func (m *Mail) Path() string {
@@ -57,6 +57,7 @@ func (m *Mail) IsSame(other *Mail) bool {
 		m.name == other.name
 }
 
+// TODO: fsync
 func (m *Mail) CopyTo(maildir string) error {
 	file, err := os.Open(m.Path())
 	if err != nil {
