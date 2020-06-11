@@ -163,7 +163,7 @@ func main() {
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(),
-			"Usage: %s [-v] [-d] MAILDIR_CURRENT→MAILDIR_ARCHIVE\n\n", os.Args[0])
+			"Usage: %s [-v] [-d] MAILDIR_CURRENT→MAILDIR_ARCHIVE...\n\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 	flag.Parse()
