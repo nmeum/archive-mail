@@ -12,7 +12,7 @@ add_mail() {
 }
 
 check_maildir() {
-	diffout="$(diff -r "${1}" "${2}")"
+	diffout="$(diff -ur "${1}" "${2}")"
 	if [ $? -ne 0 ]; then
 		printf "FAIL: Directories differ.\n\n%s\n" "${diffout}"
 		exit 1
