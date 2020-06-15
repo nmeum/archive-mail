@@ -23,7 +23,6 @@ for test in [0-9][0-9][0-9][0-9]:*; do
 
 	"${scriptdir}/${test##*/}"
 	if [ $? -ne 0 ]; then
-		printf "FAIL\n"
 		exit 1
 	fi
 
