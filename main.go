@@ -89,6 +89,11 @@ func parseArgs(args []string) (map[string]string, error) {
 
 		new := splitted[0]
 		old := splitted[1]
+		for _, dir := range []string{old, new} {
+			if !isValidMaildir(dir) {
+				return nil, fmt.Errorf("%q is not a valid maildir", dir)
+			}
+		}
 
 		if _, ok := parsedArgs[new]; ok {
 			return nil, fmt.Errorf("duplicate maildir %q", arg)

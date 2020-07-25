@@ -1,11 +1,23 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 )
 
 func isMaildir(name string) bool {
 	return name == "new" || name == "cur" || name == "tmp"
+}
+
+func isValidMaildir(dir string) bool {
+	for _, fn := range []string{"new", "cur", "tmp"} {
+		_, err := os.Stat(filepath.Join(dir, fn))
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func getDir(path string) string {
