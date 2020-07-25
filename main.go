@@ -53,7 +53,7 @@ func walkMaildir(maildir string, db *MailDatabase, walkFn MailWalkFn) error {
 		}
 
 		if info.IsDir() {
-			if !isMaildir(info.Name()) {
+			if !isMaildirFn(info.Name()) {
 				return handleError(fmt.Errorf("unexpected directory %q", info.Name()))
 			} else {
 				return nil

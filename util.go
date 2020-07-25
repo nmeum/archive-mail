@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 )
 
-func isMaildir(name string) bool {
+func isMaildirFn(name string) bool {
 	return name == "new" || name == "cur" || name == "tmp"
 }
 
@@ -22,7 +22,7 @@ func isValidMaildir(dir string) bool {
 
 func getDir(path string) string {
 	dir := filepath.Base(filepath.Dir(path))
-	if !isMaildir(dir) {
+	if !isMaildirFn(dir) {
 		panic("unexpected non-maildir folder")
 	}
 
