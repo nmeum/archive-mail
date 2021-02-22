@@ -13,7 +13,7 @@ export TESTDIR="${TMPDIR:-/tmp}/mail-archive-tests"
 trap "rm -rf '${TESTDIR}' 2>/dev/null" INT EXIT
 
 scriptdir="$(pwd)"
-for test in [0-9][0-9][0-9][0-9]:*; do
+for test in [0-9][0-9][0-9][0-9]-*; do
 	mkdir -p "${TESTDIR}"
 	cd "${TESTDIR}"
 	mmkdir current archive expected
