@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 )
@@ -12,7 +13,7 @@ func isMaildirFn(name string) bool {
 func isValidMaildir(dir string) bool {
 	for _, fn := range []string{"new", "cur", "tmp"} {
 		_, err := os.Stat(filepath.Join(dir, fn))
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return false
 		}
 	}

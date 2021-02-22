@@ -5,7 +5,6 @@ import (
 	"errors"
 	"hash"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,7 +42,7 @@ func (m *Mail) Path() string {
 }
 
 func (m *Mail) Checksum() (string, error) {
-	data, err := ioutil.ReadFile(m.Path())
+	data, err := os.ReadFile(m.Path())
 	if err != nil {
 		return "", err
 	}
