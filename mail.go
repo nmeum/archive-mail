@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"errors"
 	"hash"
 	"io"
@@ -10,8 +10,7 @@ import (
 	"strings"
 )
 
-// SHA1 should be good enough for this purpose
-var chkSum hash.Hash = sha1.New()
+var chkSum hash.Hash = sha256.New()
 
 type Mail struct {
 	maildir   string // path to maildir
