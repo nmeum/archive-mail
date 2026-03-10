@@ -34,7 +34,7 @@ current maildir will also not be deleted from the archive.
 
 After cloning this repository compile the software as follows:
 
-	$ go build
+	$ go install git.8pit.net/archive-mail@latest
 
 Afterwards copy the binary to your `$PATH` or use `go install`.
 
